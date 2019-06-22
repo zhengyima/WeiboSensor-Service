@@ -7,14 +7,16 @@ import operator
 
 import jieba
 import jieba.analyse
+import time
+
 @csrf_exempt
 def emotion(request):
 
     key = request.GET["key"]
-    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A'+key+'&wt=json&rows=1000&indent=true'
+    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A'+key+'&wt=json&rows=10000&indent=true'
     r = requests.get(url, verify=False)
     r = r.json()["response"]["docs"]
-    print(r)
+    # print(r)
     positive = 0
     negative = 0
     medium = 0
@@ -40,7 +42,7 @@ def emotion(request):
                     Date[item["Date"]][0] += 1
                     Date[item["Date"]][3] += 1
                 else:
-                    print("aaaa")
+                    # print("aaaa")
                     Date[item["Date"]]  = [1,0,0,1]
                 negative += 1
             if item["Opinion"] == 0:
@@ -55,14 +57,14 @@ def emotion(request):
 
             continue
     res = list(sorted(Date.items(),key=lambda d:d[0],reverse=False))
-    print(res)
+    # print(res)
     for i in res:
         key.append(i[0])
         value.append(i[1])
     context = {'key':key, 'value':value}
     #print(key)
     #print(value)
-    print(context)
+    # print(context)
 
     response = HttpResponse(json.dumps(context))
     response["Access-Control-Allow-Origin"] = "*"
@@ -75,10 +77,12 @@ def emotion(request):
 
 @csrf_exempt
 def transform(request):
+    print(time.asctime( time.localtime(time.time()) ))
     key = request.GET["key"]
     url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A'+key+'&wt=json&rows=10000&indent=true&&fl=PntData_tags%2CEntity_pers%2CEntity_orgs%2COWord_neg%2CDataS_p_location%2COpinion%2COWord_pos%2CDate'
     r = requests.get(url, verify=False)
     r = r.json()["response"]["docs"]
+    print(time.asctime( time.localtime(time.time()) ))
     positive = 0
     negative = 0
     medium = 0
@@ -266,6 +270,8 @@ def transform(request):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
 
+    print(time.asctime( time.localtime(time.time()) ))
+
     return response
 
 
@@ -274,7 +280,7 @@ def transform(request):
 @csrf_exempt
 def getContentList(request):
     key = request.GET["key"]
-    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A'+key+'&sort=Meta_zhan+desc&rows=1000&wt=json&indent=true'
+    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A'+key+'&sort=Meta_zhan+desc&rows=10000&wt=json&indent=true'
     r = requests.get(url, verify=False)
     r = r.json()["response"]["docs"]
     contentList=[]
@@ -321,7 +327,7 @@ def getk(request):
 @csrf_exempt
 def getKeywords(query):
 
-    url = "http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A" + query + "&wt=json&indent=true&rows=1000&fl=Text"
+    url = "http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A" + query + "&wt=json&indent=true&rows=10000&fl=Text"
     r = requests.get(url, verify=False)
     r = r.json()["response"]["docs"]
     contentList = []
@@ -329,7 +335,7 @@ def getKeywords(query):
     for d in r:
         contentList.append(d["Text"])
         sent += d["Text"] + "。"
-    print(sent)
+    # print(sent)
 
     tags = jieba.analyse.extract_tags(sent, topK=100,withWeight=True)
 
@@ -344,7 +350,7 @@ def getKeywords(query):
 @csrf_exempt
 def getCountry(request):
     key = request.GET["key"]
-    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A' + key + '&wt=json&rows=1000&indent=true'
+    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A' + key + '&wt=json&rows=10000&indent=true'
     r = requests.get(url, verify=False)
     r = r.json()["response"]["docs"]
     Location = {}
@@ -409,7 +415,7 @@ def getOpinionCount(request):
 @csrf_exempt
 def getLocation(request):
     key = request.GET["key"]
-    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A' + key + '&wt=json&rows=1000&indent=true&fl=DataS_p_location'
+    url = 'http://183.174.228.90:9993/solr/weibonow2_slave/select?q=Text%3A' + key + '&wt=json&rows=10000&indent=true&fl=DataS_p_location'
     r = requests.get(url, verify=False)
     r = r.json()["response"]["docs"]
     key=[]
@@ -439,7 +445,7 @@ def getLocation(request):
         value.append(item[1])
         # print item[0].strip('u')+":"+str(item[1])
     Location_last={'key':key[-10:],'value':value[-10:]}
-    print(Location_last)
+    # print(Location_last)
     response = HttpResponse(json.dumps(Location_last))
     response["Access-Control-Allow-Origin"] = "*"
     response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
